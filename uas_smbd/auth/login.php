@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="col-md-6">
                 <div class="card shadow">
                     <div class="card-header bg-primary text-white">
-                        <h4 class="mb-0">Login Sistem Manajemen Sekolah</h4>
+                        <h4 class="mb-0">Login Sistem Manajemen Administrasi Sekolah</h4>
                     </div>
                     <div class="card-body">
                         <?php if ($error): ?>

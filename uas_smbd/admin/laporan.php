@@ -18,11 +18,15 @@ $error = '';
 $siswa = [];
 $kelas = [];
 $nilai = [];
+$mapel = [];
+$kelas_info = [];
+$tahun_ajaran = [];
 $selected_kelas = '';
 $selected_siswa = '';
 $selected_semester = '';
 $selected_tahun = '';
 $report_type = '';
+
 
 // Get all classes for dropdown
 try {
@@ -46,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if ($report_type === 'student') {
         // Student report (rapor)
+        $selected_kelas = sanitize($_POST['id_kelas']);
         $selected_siswa = sanitize($_POST['id_siswa']);
         $selected_semester = sanitize($_POST['semester']);
         $selected_tahun = sanitize($_POST['tahun_ajaran']);
@@ -102,19 +107,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $kelas_info = $stmt->fetch();
             
             // Get all students in the class with their average grade
+            // $stmt = $conn->prepare("
+            //     SELECT s.id_siswa, s.nis, s.nama_siswa, 
+            //            AVG(n.nilai) as rata_rata, 
+            //            COUNT(n.id_nilai) as jumlah_mapel,
+            //            MAX(n.nilai) as nilai_tertinggi,
+            //            MIN(n.nilai) as nilai_terendah
+            //     FROM siswa s
+            //     LEFT JOIN nilai n ON s.id_siswa = n.id_siswa AND n.semester = ? AND n.tahun_ajaran = ?
+            //     WHERE s.id_kelas = ?
+            //     GROUP BY s.id_siswa
+            //     ORDER BY rata_rata DESC
+            // ");
+            // $stmt->execute([$selected_semester, $selected_tahun, $selected_kelas]);
+            // $siswa = $stmt->fetchAll();
+
+            // Gunakan view untuk mendapatkan rata-rata nilai siswa
             $stmt = $conn->prepare("
-                SELECT s.id_siswa, s.nis, s.nama_siswa, 
-                       AVG(n.nilai) as rata_rata, 
-                       COUNT(n.id_nilai) as jumlah_mapel,
-                       MAX(n.nilai) as nilai_tertinggi,
-                       MIN(n.nilai) as nilai_terendah
-                FROM siswa s
-                LEFT JOIN nilai n ON s.id_siswa = n.id_siswa AND n.semester = ? AND n.tahun_ajaran = ?
-                WHERE s.id_kelas = ?
-                GROUP BY s.id_siswa
+                SELECT * FROM view_nilai_rata_rata
+                WHERE nama_kelas = (SELECT nama_kelas FROM kelas WHERE id_kelas = ?)
+                AND semester = ? AND tahun_ajaran = ?
                 ORDER BY rata_rata DESC
             ");
-            $stmt->execute([$selected_semester, $selected_tahun, $selected_kelas]);
+            $stmt->execute([$selected_kelas, $selected_semester, $selected_tahun]);
             $siswa = $stmt->fetchAll();
             
             // Get all subjects with class average
@@ -209,10 +224,10 @@ include_once '../includes/header.php';
                         <div class="col-md-3">
                             <div class="mb-3">
                                 <label for="id_kelas_siswa" class="form-label">Kelas</label>
-                                <select class="form-select" id="id_kelas_siswa" required>
+                                <select class="form-select" id="id_kelas_siswa" name="id_kelas" required>
                                     <option value="">Pilih Kelas</option>
                                     <?php foreach ($kelas as $k): ?>
-                                        <option value="<?php echo $k['id_kelas']; ?>">
+                                        <option value="<?php echo $k['id_kelas']; ?>" <?php echo ($selected_kelas == $k['id_kelas']) ? 'selected' : ''; ?>>
                                             <?php echo $k['nama_kelas']; ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -522,6 +537,24 @@ include_once '../includes/header.php';
         const kelasSelect = document.getElementById('id_kelas_siswa');
         const siswaSelect = document.getElementById('id_siswa');
         
+        // Set siswa value to selected if available (for edit after submit)
+        <?php if ($selected_kelas && $report_type === 'student'): ?>
+        fetch(`laporan.php?get_students=1&id_kelas=<?php echo $selected_kelas; ?>`)
+            .then(response => response.json())
+            .then(data => {
+                siswaSelect.innerHTML = '<option value="">Pilih Siswa</option>';
+                data.forEach(function(student) {
+                    const option = document.createElement('option');
+                    option.value = student.id_siswa;
+                    option.textContent = student.nama_siswa;
+                    if (student.id_siswa == "<?php echo $selected_siswa; ?>") {
+                        option.selected = true;
+                    }
+                    siswaSelect.appendChild(option);
+                });
+            });
+        <?php endif; ?>
+
         kelasSelect.addEventListener('change', function() {
             const kelasId = this.value;
             
@@ -585,7 +618,8 @@ include_once '../includes/header.php';
     });
 </script>
 
+
+
 <?php
 // Include footer
 include_once '../includes/footer.php';
-?>

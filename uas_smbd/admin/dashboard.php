@@ -132,12 +132,13 @@ include_once '../includes/header.php';
                             </thead>
                             <tbody>
                                 <?php
+
+                                // Data untuk chart - jumlah siswa per kelas menggunakan view
                                 try {
                                     $stmt = $conn->query("
-                                        SELECT s.nis, s.nama_siswa, k.nama_kelas 
-                                        FROM siswa s
-                                        LEFT JOIN kelas k ON s.id_kelas = k.id_kelas
-                                        ORDER BY s.id_siswa DESC
+                                        SELECT nis, nama_siswa, nama_kelas
+                                        FROM view_siswa_kelas
+                                        ORDER BY id_siswa DESC
                                         LIMIT 5
                                     ");
                                     

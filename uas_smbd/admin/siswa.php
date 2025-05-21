@@ -40,20 +40,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     
     try {
         if ($action === 'add') {
-            // Check if NIS already exists
-            $stmt = $conn->prepare("SELECT COUNT(*) FROM siswa WHERE nis = ?");
-            $stmt->execute([$nis]);
-            if ($stmt->fetchColumn() > 0) {
-                $error = "NIS sudah terdaftar!";
-            } else {
-                // Insert new student
-                $stmt = $conn->prepare("
-                    INSERT INTO siswa (nis, nama_siswa, tanggal_lahir, jenis_kelamin, alamat, id_kelas) 
-                    VALUES (?, ?, ?, ?, ?, ?)
-                ");
-                $stmt->execute([$nis, $nama_siswa, $tanggal_lahir, $jenis_kelamin, $alamat, $id_kelas]);
-                $message = "Siswa berhasil ditambahkan!";
-            }
+            // Call stored procedure to add student (only pass 6 arguments)
+            $stmt = $conn->prepare("CALL sp_tambah_siswa(?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$nis, $nama_siswa, $tanggal_lahir, $jenis_kelamin, $alamat, $id_kelas]);
+            // Optionally, set a success message (since output variables are not used)
+            $message = "Siswa berhasil ditambahkan!";
+
+            
         } elseif ($action === 'edit') {
             $id_siswa = sanitize($_POST['id_siswa']);
             

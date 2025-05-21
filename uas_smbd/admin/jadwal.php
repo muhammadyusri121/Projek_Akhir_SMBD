@@ -198,14 +198,13 @@ try {
     $totalPages = ceil($totalRecords / $limit);
     
     // Get schedules with related information
+    $stmt->execute();
+    $jadwalHariIni = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
     $query = "
-        SELECT j.*, k.nama_kelas, g.nama_guru, m.nama_mapel 
-        FROM jadwal j
-        LEFT JOIN kelas k ON j.id_kelas = k.id_kelas
-        LEFT JOIN guru g ON j.id_guru = g.id_guru
-        LEFT JOIN mata_pelajaran m ON j.id_mapel = m.id_mapel
+        SELECT * FROM view_jadwal_lengkap
         $whereStr
-        ORDER BY j.hari, j.jam_mulai
+        ORDER BY hari, jam_mulai
         LIMIT ? OFFSET ?
     ";
 
